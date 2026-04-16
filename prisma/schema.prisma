@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  audits      Audit[]
+}
+
+model Audit {
+  id           String    @id @default(cuid())
+  clientId     String
+  client       Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  platform     String    // "google" | "meta"
+  businessType String    // "ecom" | "leadgen"
+  periodStart  DateTime?
+  periodEnd    DateTime?
+  auditor      String?
+  status       String    @default("draft") // "draft" | "completed"
+  rawData      String    // JSON serialized parsed data from upload
+  auditData    String    // JSON serialized filled template data
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([createdAt])
+}
+
+model Settings {
+  id                  Int      @id @default(1)
+  anthropicApiKey     String?
+  promptGoogleEcom    String?
+  promptGoogleLeadgen String?
+  promptMeta          String?
+  updatedAt           DateTime @updatedAt @default(now())
+}
