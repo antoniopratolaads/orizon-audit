@@ -45,20 +45,33 @@ fi
 systemctl enable --now docker >/dev/null
 ok "Docker installato"
 
-# 2. Clone or update repo
-if [[ -n "${REPO_URL}" && ! -d "${APP_DIR}/.git" ]]; then
+# 2. Fetch sources
+#    Three modes, in priority:
+#      (a) TARBALL_URL   → scarica tar.gz e estrae in APP_DIR
+#      (b) REPO_URL      → git clone (o git pull se già clonato)
+#      (c) already present → skip
+TARBALL_URL="${TARBALL_URL:-}"
+if [[ -n "${TARBALL_URL}" ]]; then
+  log "Download tarball ${TARBALL_URL} → ${APP_DIR}"
+  mkdir -p "${APP_DIR}"
+  curl -fsSL "${TARBALL_URL}" | tar xz -C "${APP_DIR}"
+  ok "Sorgenti estratti"
+elif [[ -n "${REPO_URL}" && ! -d "${APP_DIR}/.git" ]]; then
   log "Clone ${REPO_URL} → ${APP_DIR}"
   mkdir -p "$(dirname "${APP_DIR}")"
   git clone --branch "${BRANCH}" "${REPO_URL}" "${APP_DIR}"
+  ok "Repo clonato"
 elif [[ -d "${APP_DIR}/.git" ]]; then
   log "Repo already present, git pull"
   git -C "${APP_DIR}" fetch --all
   git -C "${APP_DIR}" reset --hard "origin/${BRANCH}"
+  ok "Repo aggiornato"
+elif [[ -f "${APP_DIR}/package.json" ]]; then
+  log "Sorgenti già presenti (no git, no tarball fresh download)"
 else
-  err "REPO_URL non impostato e ${APP_DIR} non esiste. Export REPO_URL o clona manualmente."
+  err "Nessuna fonte sorgenti. Export TARBALL_URL o REPO_URL, oppure estrai manualmente in ${APP_DIR}."
   exit 1
 fi
-ok "Repo sincronizzato in ${APP_DIR}"
 
 cd "${APP_DIR}"
 
