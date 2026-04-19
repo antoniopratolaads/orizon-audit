@@ -41,3 +41,14 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# SQLite (dev + prod)
+*.db
+*.db-journal
+
+# Local screenshots / generated artifacts
+/guida-audit/screenshots/
+
+# Deploy secrets (generated on droplet, never commit)
+/deploy/.htpasswd
+/deploy/CREDENTIALS.txt
