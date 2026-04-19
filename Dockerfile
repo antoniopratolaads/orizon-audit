@@ -12,6 +12,8 @@ RUN npm ci --ignore-scripts
 # ─── build ─────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
+ARG BASE_PATH=""
+ENV BASE_PATH=${BASE_PATH}
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
@@ -24,10 +26,12 @@ RUN npm run build
 # ─── runtime ───────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
+ARG BASE_PATH=""
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
+    BASE_PATH=${BASE_PATH} \
     DATABASE_URL="file:/app/data/prod.db"
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini \
   && rm -rf /var/lib/apt/lists/* \

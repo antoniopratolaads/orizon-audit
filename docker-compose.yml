@@ -1,42 +1,27 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        BASE_PATH: "${BASE_PATH:-}"
     image: orizon-audit:latest
     container_name: orizon-audit
     restart: unless-stopped
-    expose:
-      - "3000"
+    ports:
+      - "127.0.0.1:3002:3000"
     volumes:
       - orizon_data:/app/data
     environment:
       NODE_ENV: production
       DATABASE_URL: "file:/app/data/prod.db"
+      BASE_PATH: "${BASE_PATH:-}"
       # Optional fallback if Settings/Prisma lookup misses the key:
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
-    networks:
-      - web
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
 
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: orizon-nginx
-    restart: unless-stopped
-    depends_on:
-      - app
-    ports:
-      - "80:80"
-    volumes:
-      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./deploy/.htpasswd:/etc/nginx/.htpasswd:ro
-    networks:
-      - web
-
 volumes:
   orizon_data:
-
-networks:
-  web:
